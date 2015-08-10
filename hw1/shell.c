@@ -7,9 +7,8 @@
 #include <termios.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <stdbool.h>
 
-#define FALSE 0
-#define TRUE 1
 #define INPUT_STRING_SIZE 80
 
 #include "io.h"

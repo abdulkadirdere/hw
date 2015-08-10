@@ -1,19 +1,35 @@
-SRCS=main.c shell.c process.c io.c parse.c 
-EXECUTABLES=shell 
+#################
+#   variables   #
+#################
 
-CC=gcc
-CFLAGS=-g -Wall 
-LDFLAGS=
+# files
+EXECUTABLE  = shell
+SOURCES  = main.c shell.c process.c io.c parse.c 
+OBJECTS  = $(SOURCES:.c=.o)
 
-OBJS=$(SRCS:.c=.o)
+# compilation and linking
+CC      = gcc
+CFLAGS  = -std=c99 -ggdb3 -c
+LDFLAGS = 
+WARN    = -Wall -Wextra -pedantic
+COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(WARN)
+LINK.c    = $(CC)
 
-all: $(EXECUTABLES)
+#################
+#     targets   #
+#################
 
-$(EXECUTABLES): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $@  
+all: $(EXECUTABLE)
 
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+$(EXECUTABLE): $(OBJECTS)
+	$(LINK.c) $^ $(LDFLAGS) -o $@
 
+$(OBJECTS): %.o: %.c
+	$(COMPILE.c) $< -o $@
+
+# phony targets
+.PHONY: clean
+
+# remove object files, emacs temporaries
 clean:
-	rm -rf $(EXECUTABLES) $(OBJS)
+	rm -f *.o *~
