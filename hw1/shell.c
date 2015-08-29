@@ -8,8 +8,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 #define INPUT_STRING_SIZE 80
+#define MAX_FILE_SIZE 1024
 
 #include "io.h"
 #include "parse.h"
@@ -27,6 +29,25 @@ int cmd_cd(tok_t arg[]) {
 	chdir (arg[0]);
 }
 
+int cmd_exec(tok_t arg[]) {
+   int pid;
+   char pathname[MAX_FILE_SIZE+1];
+
+   pid = fork();
+
+   // child process
+   if(pid == 0) {
+	execv(pathname, arg);  
+   }
+   else if(pid < 0) {
+	fprintf(stderr, "Failed to exec: %s\n", arg[0]);
+  	return -1;
+   }
+   // parent process
+	wait(NULL);
+   return 1;		
+}
+
 int cmd_help(tok_t arg[]);
 
 
@@ -41,7 +62,7 @@ typedef struct fun_desc {
 fun_desc_t cmd_table[] = {
   {cmd_help, "?", "show this help menu"},
   {cmd_quit, "quit", "quit the command shell"},
-  {cmd_cd, "cd", "changes the directory"},
+  {cmd_cd, "cd", "changes the working directory"},
 };
 
 int cmd_help(tok_t arg[]) {
@@ -107,9 +128,9 @@ process* create_process(char* inputString)
 }
 
 
-
 int shell (int argc, char *argv[]) {
   char *s = malloc(INPUT_STRING_SIZE+1);			/* user input string */
+  char cwd[MAX_FILE_SIZE+1];
   tok_t *t;			/* tokens parsed from input */
   int lineNum = 0;
   int fundex = -1;
@@ -120,17 +141,20 @@ int shell (int argc, char *argv[]) {
   init_shell();
 
   printf("%s running as PID %d under %d\n",argv[0],pid,ppid);
-
+  
+  //getcwd(cwd, MAX_FILE_SIZE);
   lineNum=0;
-  fprintf(stdout, "%d: ", lineNum);
+  //fprintf(stdout, "%d - %s: ", cwd, lineNum);
+  
   while ((s = freadln(stdin))){
     t = getToks(s); /* break the line into tokens */
     fundex = lookup(t[0]); /* Is first token a shell literal */
-    if(fundex >= 0) cmd_table[fundex].fun(&t[1]);
-    else {
-      fprintf(stdout, "This shell only supports built-ins. Replace this to run programs as commands.\n");
+   if(fundex >= 0) cmd_table[fundex].fun(&t[1]);
+    else{
+    cmd_exec(&t[0]);
+    //fprintf(stdout, "This shell only supports built-ins. Replace this to run programs as commands.\n");
     }
-    fprintf(stdout, "%d %s: ", lineNum, get_current_dir_name());
+    fprintf(stdout, "%d %s: ", ++lineNum, get_current_dir_name());
   }
   return 0;
 }

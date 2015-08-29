@@ -11,7 +11,7 @@ OBJECTS  = $(SOURCES:.c=.o)
 CC      = gcc
 CFLAGS  = -std=c99 -ggdb3 -c
 LDFLAGS = 
-WARN    = -Wall -Wextra -pedantic
+WARN    = -Wall -Wextra -pedantic -w
 COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(WARN)
 LINK.c    = $(CC)
 
