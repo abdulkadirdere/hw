@@ -31,13 +31,15 @@ int cmd_cd(tok_t arg[]) {
 
 int cmd_exec(tok_t arg[]) {
    int pid;
-   char pathname[MAX_FILE_SIZE+1];
-
+   char* pathname = arg[0];
+	
    pid = fork();
 
    // child process
    if(pid == 0) {
+   	//fprintf(stdout, "%s\n", pathname);
 	execv(pathname, arg);  
+	exit(0);
    }
    else if(pid < 0) {
 	fprintf(stderr, "Failed to exec: %s\n", arg[0]);
@@ -145,14 +147,15 @@ int shell (int argc, char *argv[]) {
   //getcwd(cwd, MAX_FILE_SIZE);
   lineNum=0;
   //fprintf(stdout, "%d - %s: ", cwd, lineNum);
-  
   while ((s = freadln(stdin))){
+    
     t = getToks(s); /* break the line into tokens */
     fundex = lookup(t[0]); /* Is first token a shell literal */
-   if(fundex >= 0) cmd_table[fundex].fun(&t[1]);
+   if(fundex >= 0) {
+   	cmd_table[fundex].fun(&t[1]);
+   }
     else{
-    cmd_exec(&t[0]);
-    //fprintf(stdout, "This shell only supports built-ins. Replace this to run programs as commands.\n");
+	cmd_exec(t);
     }
     fprintf(stdout, "%d %s: ", ++lineNum, get_current_dir_name());
   }

@@ -32,4 +32,4 @@ $(OBJECTS): %.o: %.c
 
 # remove object files, emacs temporaries
 clean:
-	rm -f *.o *~
+	rm -f *.o *~ *shell
