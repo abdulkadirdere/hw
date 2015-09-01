@@ -25,8 +25,43 @@ int cmd_quit(tok_t arg[]) {
 }
 
 int cmd_cd(tok_t arg[]) {
-
 	chdir (arg[0]);
+}
+
+char* concat(char *r1, char *r2) //for concating
+{
+    char *result = malloc(strlen(r1)+strlen(r2)+1);
+    strcpy(result, r1);
+    strcat(result, r2);
+    return result;
+}
+
+char* split(tok_t arg[]) //for the "/"
+{
+	tok_t *t;
+	char* pathname = getenv("PATH");
+	t = getToks(pathname);
+	char* split = NULL;
+ 	FILE* file;
+ 	
+	int k;
+	for (k = 0; k < MAXTOKS;k++)
+	{
+		split = concat(t[k],"/");
+		split = concat(split, arg[0]);
+		file = fopen(split, "r");
+		if (file == NULL)	{
+			continue;
+			}
+		else{
+			break;
+			}
+		fclose(file);
+	}
+	if (split == NULL){
+		return arg[0];
+	}
+   return split;
 }
 
 int cmd_exec(tok_t arg[]) {
@@ -38,6 +73,7 @@ int cmd_exec(tok_t arg[]) {
    // child process
    if(pid == 0) {
    	//fprintf(stdout, "%s\n", pathname);
+   	pathname=split(arg);
 	execv(pathname, arg);  
 	exit(0);
    }
