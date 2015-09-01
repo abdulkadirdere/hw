@@ -9,6 +9,8 @@
 #include <sys/wait.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define INPUT_STRING_SIZE 80
 #define MAX_FILE_SIZE 1024
@@ -74,6 +76,7 @@ int cmd_exec(tok_t arg[]) {
    if(pid == 0) {
    	//fprintf(stdout, "%s\n", pathname);
    	pathname=split(arg);
+   	process_redirection(arg+1);
 	execv(pathname, arg);  
 	exit(0);
    }
@@ -84,6 +87,47 @@ int cmd_exec(tok_t arg[]) {
    // parent process
 	wait(NULL);
    return 1;		
+}
+
+//Input/Output Redirection
+int process_redirection(tok_t arg[]) {
+     int index = 1; // first argument is the program itself
+     int outfd, infd;
+     int ret;
+     while(index < MAXTOKS && arg[index]) {
+	switch(arg[index][0]) {
+	    case '>':
+		outfd = open(arg[++index], O_WRONLY|O_CREAT, S_IRWXU|S_IRWXG|S_IROTH);
+		if(outfd == -1) {
+	    fprintf(stderr, "Failed to open %s\n",arg[index]);
+		    return -1;
+		}
+		close(1);
+		ret = dup2(outfd, 1);
+                if(ret < 0) {
+		    fprintf(stderr, "Failed to invoke dup2 for stdout, return code is %d\n", ret);
+		    return -1;
+	        }
+		arg[index-1] = arg[index] = NULL;
+                break;
+	    case '<':
+		infd = open(arg[++index], O_RDONLY);
+		if(infd == -1) {
+		    fprintf(stderr, "Failed to open %s\n",arg[index]);
+		    return -1;
+		}
+		close(0);
+		ret = dup2(infd, 0);
+                if(ret < 0) {
+		    fprintf(stderr, "Failed to invoke dup2 for stdin, return code is %d\n", ret);
+		    return -1;
+	        }
+		arg[index-1] = arg[index] = NULL;
+                break;
+        }
+	index++;
+     }
+     return 0;
 }
 
 int cmd_help(tok_t arg[]);
